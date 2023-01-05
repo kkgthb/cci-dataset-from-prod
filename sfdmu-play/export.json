@@ -2,8 +2,9 @@
     "objects": [
         {
             "operation": "Readonly",
-            "externalId": "Name",
-            "query": "SELECT updateable_true, RecordType.DeveloperName, RecordTypeId FROM Account"
+            "externalId": "hed__School_Code__c, Name",
+            "query": "SELECT updateable_true, lookup_false, hed__Current_Address__c, RecordType.DeveloperName FROM Account",
+            "excludedFields": "IsPartner, IsCustomerPortal, CleanStatus, hed__Billing_Address_Inactive__c"
         }
     ]
 }

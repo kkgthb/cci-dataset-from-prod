@@ -12,7 +12,7 @@ Ideas of "validation tables":
 
 
 ```sh
-sfdx sfdmu:run --sourceusername cci-dataset-from-prod-demo__feature --targetusername csvfile
+sfdx sfdmu:run --sourceusername cci-dataset-from-prod-demo__feature --targetusername csvfile --path sfdmu-play
 ```
 
 ```sh
@@ -25,4 +25,19 @@ cci task run load_dataset -o mapping ccidataplay/mp.yml -o sql_path ccidataplay/
 
 ```sh
 cci task run try_a_python --org feature
+```
+
+Here is an example `export.json` that mostly ignores lookup fields _(`lookup_false`)_ unless they've been deemed important _(don't forget to define their `externalId` elsewhere in `export.json`)_:
+
+```json
+{
+    "objects": [
+        {
+            "operation": "Readonly",
+            "externalId": "hed__School_Code__c, Name",
+            "query": "SELECT updateable_true, lookup_false, hed__Current_Address__c, RecordType.DeveloperName FROM Account",
+            "excludedFields": "IsPartner, IsCustomerPortal, CleanStatus, hed__Billing_Address_Inactive__c"
+        }
+    ]
+}
 ```
