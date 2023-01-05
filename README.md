@@ -22,3 +22,7 @@ cci task run snowfakery --recipe fakes/snowfake.yml --org feature
 ```sh
 cci task run load_dataset -o mapping ccidataplay/mp.yml -o sql_path ccidataplay/dt.sql --org feature
 ```
+
+```sh
+cci task run try_a_python --org feature
+```

@@ -14,3 +14,6 @@ sources:
     github: https://github.com/SalesforceFoundation/EDA
   summit:
     github: https://github.com/SFDO-Community/Summit-Events-App
+tasks:
+    try_a_python:
+        class_path: tasks.firstpython.YayForPython
