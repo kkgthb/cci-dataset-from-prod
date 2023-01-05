@@ -1,0 +1,9 @@
+{
+    "objects": [
+        {
+            "operation": "Readonly",
+            "externalId": "Name",
+            "query": "SELECT updateable_true, RecordType.DeveloperName, RecordTypeId FROM Account"
+        }
+    ]
+}
