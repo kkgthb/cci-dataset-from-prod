@@ -48,3 +48,9 @@ Here is an example `export.json` that mostly ignores lookup fields _(`lookup_fal
     ]
 }
 ```
+
+## Thoughts
+
+1. I get that my goal is to use the handwritten Python to parse SFDMU files into `loadme.sql`.
+2. But with what, exactly, am I going to generate `mp.yml` out of thin air?
+    * Am I going to use some sort of variation on the code found in https://github.com/kkgthb/download-salesforce-objects-and-fields-as-json ?
