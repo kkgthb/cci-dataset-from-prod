@@ -1,0 +1,26 @@
+- object: Account
+  count: 2
+  fields:
+    RecordType: Educational_Institution
+    Name:
+      random_choice:
+        - choice:
+            probability: 50%
+            pick:
+              random_choice:
+                - choice:
+                    probability: 50%
+                    pick: ${{fake.last_name}} High School
+                - choice:
+                    probability: 50%
+                    pick: ${{fake.city}} High School
+        - choice:
+            probability: 50%
+            pick:
+              random_choice:
+                - choice:
+                    probability: 50%
+                    pick: ${{fake.last_name}} University
+                - choice:
+                    probability: 50%
+                    pick: ${{fake.city}} University
