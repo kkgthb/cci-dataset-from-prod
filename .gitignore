@@ -59,3 +59,7 @@ $RECYCLE.BIN/
 test_results.json
 test_results.xml
 output
+
+# SFDMU output
+sfdmu-play/*
+!sfdmu-play/export.json
