@@ -5,3 +5,12 @@ project:
   git:
     default_branch: 'main'
   source_format: sfdx
+  dependencies:
+    - github: https://github.com/SalesforceFoundation/EDA # Remember to hand-run (or add to this file) EDA's "update_admin_profile" task.
+    - github: https://github.com/SFDO-Community/Summit-Events-App
+    - github: https://github.com/Kathy-Lueckeman/EASY-Open-Source-Solution # Remember to add "communitiesSettings": {"enableNetworksEnabled": true} to org definitions if including this.
+sources:
+  eda:
+    github: https://github.com/SalesforceFoundation/EDA
+  summit:
+    github: https://github.com/SFDO-Community/Summit-Events-App
