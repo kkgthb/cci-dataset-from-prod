@@ -51,10 +51,10 @@ Here is an example `export.json` that mostly ignores lookup fields _(`lookup_fal
 
 ## Thoughts
 
-1. I get that my goal is to use the handwritten Python to parse SFDMU files into `mp.yml` and parts of `loadme.sql`.
+1. I get that my goal is to use the handwritten Python to parse SFDMU files into `mapme.yml` and parts of `loadme.sql`.
 2. But with what, exactly, am I going to generate the **field datatypes** in `loadme.sql`?
     * Am I going to use some sort of variation on the code found in https://github.com/kkgthb/download-salesforce-objects-and-fields-as-json ?
-    * Am I going to admit that this command is pretty darned good at the field type inference and do some sort of back-and-forth between running SFDMU, running custom Python to generate `mp.yml` off the SFDMU, running this command to parse the `mp.yml` into a `.sql`, and then running custom Python to tear the `.sql` to shreds, keeping just greatest hits from the `CREATE TABLE` statements?
+    * Am I going to admit that this command is pretty darned good at the field type inference and do some sort of back-and-forth between running SFDMU, running custom Python to generate `mapme.yml` off the SFDMU, running this command to parse the `mp.yml` into a `loadme_draft.sql`, and then running custom Python to tear the `loadme_draft.sql` to shreds, keeping just greatest hits from the `CREATE TABLE` statements for `loadme.sql`?  That sounds inefficient data-downloading-wise if I can't limit `extract_dataset` to 1 row per object.
         ```sh
         cci task run extract_dataset -o mapping ccidataplay/mp.yml -o sql_path ccidataplay/extracted.sql --org feature
         ```
