@@ -1,0 +1,11 @@
+{
+  "orgName": "Demo of using SFDMU to build a CCI dataset from a prod org - Dev Org",
+  "edition": "Developer",
+  "settings": {
+    "securitySettings": {
+      "sessionSettings": {
+        "forceRelogin": false
+      }
+    }
+  }
+}

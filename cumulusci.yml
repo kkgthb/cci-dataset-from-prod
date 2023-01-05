@@ -1,0 +1,7 @@
+project:
+  name: cci-dataset-from-prod-demo
+  package:
+    name: Demo of using SFDMU to build a CCI dataset from a prod org
+  git:
+    default_branch: 'main'
+  source_format: sfdx
