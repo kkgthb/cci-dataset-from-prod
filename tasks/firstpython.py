@@ -13,8 +13,28 @@ cci_play_folder = os.path.abspath(os.path.join(up_one_folder, 'ccidataplay'))
 
 class YayForPython(BaseSalesforceApiTask):
 
+    def __create_data_table(self, obj_api_name, obj_detls, dest_cur):
+
+        create_table_fields_scriptlets = []
+        for field_api_name, field_details in obj_detls['mapping_field_api_names'].items():
+            create_field_script = f'"{field_api_name}" ' + field_details.get('sqlite_data_type')
+            if field_details.get('unique_constraint') == True:
+                create_field_script += ' UNIQUE'
+            if field_details.get('not_null_constraint') == True:
+                create_field_script += ' NOT NULL'
+            create_table_fields_scriptlets.append(create_field_script)
+        obj_primary_key = obj_detls['upsert_mapping_key_api_name']
+        create_table_fields_scriptlets.append(f'PRIMARY KEY ("{obj_primary_key}")')
+        create_table_fields_block = '\n\t, '.join(create_table_fields_scriptlets)
+        print(create_table_fields_block)
+# CREATE TABLE "sqlt_Account" (
+#     "sqlt___hed__School_Code__c" VARCHAR(255) UNIQUE NOT NULL,
+#     "sqlt___Name" VARCHAR(255) NOT NULL,
+#     "sqlt___RecordTypeId" VARCHAR(255) NOT NULL,
+#     PRIMARY KEY ("sqlt___hed__School_Code__c")
+# );
+
     def __create_record_type_table(self, obj_api_name, record_type_developer_names_set, dest_cur):
-        print(obj_api_name, record_type_developer_names_set)
         create_table_script = f'''CREATE TABLE "{obj_api_name}_rt_mapping" (
 	        record_type_id VARCHAR(18) UNIQUE NOT NULL, 
 	        developer_name VARCHAR(255) UNIQUE NOT NULL, 
@@ -35,6 +55,8 @@ class YayForPython(BaseSalesforceApiTask):
             if 'record_type_developer_names' in object_detail_holder:
                 self.__create_record_type_table(
                     obj_api_name=object_api_name, record_type_developer_names_set=object_detail_holder['record_type_developer_names'], dest_cur=dest_db_cur)
+            self.__create_data_table(obj_api_name=object_api_name,
+                    obj_detls=object_detail_holder, dest_cur=dest_db_cur)
 
     def __process_sqlite_table(self, source_cur, sq_object_api_name):
         for row in source_cur.execute(f"PRAGMA table_info('sqlt_{sq_object_api_name}')"):
