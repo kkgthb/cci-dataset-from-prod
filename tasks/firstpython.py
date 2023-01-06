@@ -10,7 +10,11 @@ this_python_codebase_path = os.path.realpath(os.path.dirname(__file__))
 up_one_folder = os.path.abspath(os.path.join(this_python_codebase_path, '..'))
 sfdmu_play_folder = os.path.abspath(os.path.join(up_one_folder, 'sfdmu-play'))
 sfdmu_objects_of_interest = {'Account': {
-    'object_api_name': 'Account', 'upsert_mapping_key_api_name': 'hed__School_Code__c'}}
+    'object_api_name': 'Account', 'upsert_mapping_key_api_name': 'hed__School_Code__c'}, 'summit__Summit_Events__c': {
+        'object_api_name': 'summit__Summit_Events__c', 'upsert_mapping_key_api_name': 'Name'
+    }, 'summit__Summit_Events_Instance__c': {
+        'object_api_name': 'summit__Summit_Events_Instance__c', 'upsert_mapping_key_api_name': 'Name'
+    }}
 cci_play_folder = os.path.abspath(os.path.join(up_one_folder, 'ccidataplay'))
 
 
@@ -112,9 +116,11 @@ class YayForPython(BaseSalesforceApiTask):
         # if '.' in field_api_name: # DEBUG LINE ONLY
         #    print('Next line has a period in it') # DEBUG LINE ONLY -- we want to handle these a special way TBD.
         if '.' not in field_api_name and field_api_name not in mapping_field_api_name_collector:
+            # TODO:  Something feels wrong about mapping_field_api_name_collector
             mapping_field_api_name_collector[field_api_name] = {
                 'field_api_name': field_api_name}
             row_data_collector[field_api_name] = cell_value
+            # TODO:  Add some sort of handling for putting "__r" foreign-key values in their "__c" columns, just like was done with "RecordType"
         if field_api_name in ['Name', obj_pk_api_name]:
             mapping_field_api_name_collector[field_api_name]['not_null_constraint'] = True
         if field_api_name == obj_pk_api_name:
