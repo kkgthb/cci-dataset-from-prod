@@ -13,6 +13,29 @@ cci_play_folder = os.path.abspath(os.path.join(up_one_folder, 'ccidataplay'))
 
 class YayForPython(BaseSalesforceApiTask):
 
+    def __create_record_type_table(self, obj_api_name, record_type_developer_names_set, dest_cur):
+        print(obj_api_name, record_type_developer_names_set)
+        create_table_script = f'''CREATE TABLE "{obj_api_name}_rt_mapping" (
+	        record_type_id VARCHAR(18) UNIQUE NOT NULL, 
+	        developer_name VARCHAR(255) UNIQUE NOT NULL, 
+	        PRIMARY KEY (record_type_id)
+        );
+        '''
+        dest_cur.executescript(create_table_script)
+        for record_type_developer_name in record_type_developer_names_set:
+            insert_record_script = f'''INSERT INTO "{obj_api_name}_rt_mapping" 
+                (record_type_id, developer_name) 
+                VALUES 
+                ('{record_type_developer_name}','{record_type_developer_name}');
+            '''
+            dest_cur.executescript(insert_record_script)
+
+    def __make_new_sqlite(self, dest_db_conn, dest_db_cur):
+        for object_api_name, object_detail_holder in sfdmu_objects_of_interest.items():
+            if 'record_type_developer_names' in object_detail_holder:
+                self.__create_record_type_table(
+                    obj_api_name=object_api_name, record_type_developer_names_set=object_detail_holder['record_type_developer_names'], dest_cur=dest_db_cur)
+
     def __process_sqlite_table(self, source_cur, sq_object_api_name):
         for row in source_cur.execute(f"PRAGMA table_info('sqlt_{sq_object_api_name}')"):
             # 6-item tuple:  https://renenyffenegger.ch/notes/development/databases/SQLite/sql/pragma/table_info
@@ -48,13 +71,15 @@ class YayForPython(BaseSalesforceApiTask):
             mapping_field_api_name_collector['RecordTypeId'] = {
                 'field_api_name': 'RecordTypeId', 'not_null_constraint': True}
             record_type_developer_name_collector.add(cell_value)
+            row_data_collector['RecordTypeId'] = cell_value
         # print(field_api_name, cell_value) # DEBUG LINE ONLY
 
     def __process_csv_row(self, csv_row, rw_object_api_name, table_data_collector):
         worthy_mapping_field_api_names = {}
         worthy_record_type_developer_names = set()
         csv_rw_data_collector = {}
-        object_primary_key_api_name = sfdmu_objects_of_interest[rw_object_api_name]['upsert_mapping_key_api_name']
+        object_primary_key_api_name = sfdmu_objects_of_interest[
+            rw_object_api_name]['upsert_mapping_key_api_name']
         row_pk_value = csv_row[object_primary_key_api_name]
         # Skip rows that do not yet have proper PK data.
         # (TODO:  Use SFDMU transformations to make sure bad prod data DOES have proper PK data.)
@@ -75,7 +100,8 @@ class YayForPython(BaseSalesforceApiTask):
         csv_table_data_collector = {}
         # print(csvreader.fieldnames) # DEBUG LINE ONLY
         # Process rows
-        [self.__process_csv_row(row, rd_object_api_name, csv_table_data_collector) for row in csv_reader]
+        [self.__process_csv_row(row, rd_object_api_name,
+                                csv_table_data_collector) for row in csv_reader]
         # Propagate table cell values upward from collector
         sfdmu_objects_of_interest[rd_object_api_name]['table_data'] = csv_table_data_collector
 
@@ -84,6 +110,8 @@ class YayForPython(BaseSalesforceApiTask):
         # "self.sf" & "self.org_config" represent org-login state that the "cci task run" context knows.
         # "self.options" is a dict-like data structure of details you put into your "cumulusci.yml" file.
         self.logger.info('Hello world')
+        # TODO:  Run SFDMU
+        # Parse SFDMU output into memory
         for object_api_name in sfdmu_objects_of_interest.keys():
             csv_file_path = os.path.abspath(os.path.join(
                 sfdmu_play_folder, 'target', f'{object_api_name}_readonly_target.csv'))
@@ -91,6 +119,7 @@ class YayForPython(BaseSalesforceApiTask):
                 self.__process_csv_reader(csv.DictReader(
                     csv_file_handle), object_api_name)
         # TODO:  Write out a mapping and run CCI extract to "db.db"
+        # Parse "db.db" into memory
         source_db_connection_object = sqlite3.connect(
             os.path.abspath(os.path.join(cci_play_folder, 'db.db')))
         source_db_cursor_object = source_db_connection_object.cursor()
@@ -99,3 +128,18 @@ class YayForPython(BaseSalesforceApiTask):
                 source_db_cursor_object, object_api_name)
         source_db_connection_object.close()
         self.logger.info(sfdmu_objects_of_interest)
+        # Handmake a new SQLite DB from memory
+        dest_db_path = os.path.abspath(os.path.join(
+            cci_play_folder, 'output.db'))
+        if os.path.exists(dest_db_path):
+            os.remove(dest_db_path)
+        dest_db_connection_object = sqlite3.connect(dest_db_path)
+        dest_db_cursor_object = dest_db_connection_object.cursor()
+        self.__make_new_sqlite(dest_db_connection_object,
+                               dest_db_cursor_object)
+        # Extra-fancy:  write new SQLite DB to SQL file
+        with open(os.path.abspath(os.path.join(
+                cci_play_folder, 'test.sql')), 'w') as f:
+            for line in dest_db_connection_object.iterdump():
+                f.write('%s\n' % line)
+        dest_db_connection_object.close()
