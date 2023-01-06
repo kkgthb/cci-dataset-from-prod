@@ -66,3 +66,8 @@ Here is an example `export.json` that mostly ignores lookup fields _(`lookup_fal
         ```sh
         cci task run extract_dataset -o mapping ccidataplay/mp.yml -o sql_path ccidataplay/extracted.sql --org feature
         ```
+
+1/6/23, 1:07PM:  Maybe I should be editing `db.db` in place, since it's already got all the data types correct.
+Theoretically, I just need to clean up primary keys and foreign key references.
+
+That or I could have both DB's open at once and insert between them maybe
