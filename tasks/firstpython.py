@@ -2,6 +2,7 @@ from cumulusci.tasks.salesforce import BaseSalesforceApiTask
 import os
 import csv
 import sqlite3
+from collections import OrderedDict
 
 this_python_codebase_path = os.path.realpath(os.path.dirname(__file__))
 up_one_folder = os.path.abspath(os.path.join(this_python_codebase_path, '..'))
@@ -14,25 +15,35 @@ cci_play_folder = os.path.abspath(os.path.join(up_one_folder, 'ccidataplay'))
 class YayForPython(BaseSalesforceApiTask):
 
     def __create_data_table(self, obj_api_name, obj_detls, dest_cur):
-
-        create_table_fields_scriptlets = []
-        for field_api_name, field_details in obj_detls['mapping_field_api_names'].items():
-            create_field_script = f'"{field_api_name}" ' + field_details.get('sqlite_data_type')
-            if field_details.get('unique_constraint') == True:
+        def __generate_field(f_api_nm, f_dtls):
+            create_field_script = f'"{f_api_nm}" ' + f_dtls.get('sqlite_data_type')
+            if f_dtls.get('unique_constraint') == True:
                 create_field_script += ' UNIQUE'
-            if field_details.get('not_null_constraint') == True:
+            if f_dtls.get('not_null_constraint') == True:
                 create_field_script += ' NOT NULL'
-            create_table_fields_scriptlets.append(create_field_script)
+            return create_field_script
         obj_primary_key = obj_detls['upsert_mapping_key_api_name']
+        create_table_fields_scriptlets = []
+        # First do primary key field
+        create_table_fields_scriptlets.append(__generate_field(f_api_nm=obj_primary_key, f_dtls=obj_detls['mapping_field_api_names'][obj_primary_key]))
+        # Then do the rest of the fields
+        [create_table_fields_scriptlets.append(__generate_field(f_api_nm=field_api_name, f_dtls=field_details)) for field_api_name, field_details in obj_detls['mapping_field_api_names'].items() if field_api_name not in [obj_primary_key]]
         create_table_fields_scriptlets.append(f'PRIMARY KEY ("{obj_primary_key}")')
-        create_table_fields_block = '\n\t, '.join(create_table_fields_scriptlets)
-        print(create_table_fields_block)
-# CREATE TABLE "sqlt_Account" (
-#     "sqlt___hed__School_Code__c" VARCHAR(255) UNIQUE NOT NULL,
-#     "sqlt___Name" VARCHAR(255) NOT NULL,
-#     "sqlt___RecordTypeId" VARCHAR(255) NOT NULL,
-#     PRIMARY KEY ("sqlt___hed__School_Code__c")
-# );
+        create_table_sql = f'CREATE TABLE "{obj_api_name}" (' + '\n\t' + ( '\n\t, '.join(create_table_fields_scriptlets) ) + '\n);'
+        dest_cur.executescript(create_table_sql)
+        for row_handle, row_fields in obj_detls['table_data'].items():
+            ordered_row_fields = OrderedDict(row_fields)
+            ordered_row_fields.move_to_end(obj_primary_key, last=False)
+            comma_separated_field_api_names = ', '.join(ordered_row_fields.keys())
+            # TODO:  Fix that this needs to be field-API-type-aware to get numbers, Booleans, etc. right.
+            comma_separated_cell_values = ', '.join([f"'{x}'" for x in ordered_row_fields.values()])
+            insert_record_script = f'''INSERT INTO "{obj_api_name}" 
+                ({comma_separated_field_api_names}) 
+                VALUES 
+                ({comma_separated_cell_values})
+            ;
+            '''
+            dest_cur.executescript(insert_record_script)
 
     def __create_record_type_table(self, obj_api_name, record_type_developer_names_set, dest_cur):
         create_table_script = f'''CREATE TABLE "{obj_api_name}_rt_mapping" (
