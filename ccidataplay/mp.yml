@@ -7,3 +7,4 @@ Insert Account:
     Name: sqlt___Name
     hed__School_Code__c: sqlt___hed__School_Code__c
     RecordTypeId: sqlt___RecordTypeId
+  soql_filter: 'hed__School_Code__c <> NULL'

@@ -32,6 +32,14 @@ cci task run load_dataset -o mapping ccidataplay/mp.yml -o sql_path ccidataplay/
 cci task run try_a_python --org feature
 ```
 
+```sh
+sf deploy metadata --source-dir force-app --target-org cci-dataset-from-prod-demo__feature
+```
+
+```sh
+cci task run extract_dataset -o mapping ccidataplay/mp.yml -o database_url sqlite:///ccidataplay/db.db --org feature
+```
+
 ## SFDMU config
 
 Here is an example `export.json` that mostly ignores lookup fields _(`lookup_false`)_ unless they've been deemed important _(don't forget to define their `externalId` elsewhere in `export.json`)_:
