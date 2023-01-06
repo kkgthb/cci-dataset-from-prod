@@ -69,5 +69,7 @@ Here is an example `export.json` that mostly ignores lookup fields _(`lookup_fal
 
 1/6/23, 1:07PM:  Maybe I should be editing `db.db` in place, since it's already got all the data types correct.
 Theoretically, I just need to clean up primary keys and foreign key references.
+    2:35PM:  I could even use SF schema info to add "ON UPDATE CASCADE" constraints to foreign key fields in data tables, 
+    and then I could just update the primary keys.  I think.
 
 That or I could have both DB's open at once and insert between them maybe

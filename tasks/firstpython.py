@@ -12,9 +12,9 @@ sfdmu_play_folder = os.path.abspath(os.path.join(up_one_folder, 'sfdmu-play'))
 sfdmu_objects_of_interest = {'Account': {
     'object_api_name': 'Account', 'upsert_mapping_key_api_name': 'hed__School_Code__c'}, 'summit__Summit_Events__c': {
         'object_api_name': 'summit__Summit_Events__c', 'upsert_mapping_key_api_name': 'Name'
-    }, 'summit__Summit_Events_Instance__c': {
+}, 'summit__Summit_Events_Instance__c': {
         'object_api_name': 'summit__Summit_Events_Instance__c', 'upsert_mapping_key_api_name': 'Name'
-    }}
+}}
 cci_play_folder = os.path.abspath(os.path.join(up_one_folder, 'ccidataplay'))
 
 
@@ -22,8 +22,8 @@ class YayForPython(BaseSalesforceApiTask):
 
     def __create_data_table(self, obj_api_name, obj_detls, dest_cur):
         def __generate_field(f_api_nm, f_dtls):
-            create_field_script = f'"{f_api_nm}" ' + \
-                f_dtls.get('sqlite_data_type')
+            create_field_script = ' '.join(
+                filter(None, (f'"{f_api_nm}" ', f_dtls.get('sqlite_data_type'))))
             if f_dtls.get('unique_constraint') == True:
                 create_field_script += ' UNIQUE'
             if f_dtls.get('not_null_constraint') == True:
@@ -36,26 +36,26 @@ class YayForPython(BaseSalesforceApiTask):
             f_api_nm=obj_primary_key, f_dtls=obj_detls['mapping_field_api_names'][obj_primary_key]))
         # Then do the rest of the fields
         [create_table_fields_scriptlets.append(__generate_field(f_api_nm=field_api_name, f_dtls=field_details))
-                                               for field_api_name, field_details in obj_detls['mapping_field_api_names'].items() if field_api_name not in [obj_primary_key]]
+         for field_api_name, field_details in obj_detls['mapping_field_api_names'].items() if field_api_name not in [obj_primary_key]]
         create_table_fields_scriptlets.append(
             f'PRIMARY KEY ("{obj_primary_key}")')
         create_table_sql = f'CREATE TABLE "{obj_api_name}" (' + '\n\t' + (
             '\n\t, '.join(create_table_fields_scriptlets)) + '\n);'
-        dest_cur.executescript(create_table_sql)
+        #dest_cur.executescript(create_table_sql) # PRODUCTION LINE; UNCOMMENT WHEN RUNNING
         for row_handle, row_fields in obj_detls['table_data'].items():
             ordered_row_fields = OrderedDict(row_fields)
             ordered_row_fields.move_to_end(obj_primary_key, last=False)
             comma_separated_field_api_names = ', '.join(
                 ordered_row_fields.keys())
             comma_separated_cell_values = ', '.join([(f"'{v}'" if (
-                'VARCHAR' in obj_detls['mapping_field_api_names'][k]['sqlite_data_type']) else v) for k, v in ordered_row_fields.items()])
+                obj_detls['mapping_field_api_names'][k].get('sqlite_data_type') is not None and 'VARCHAR' in obj_detls['mapping_field_api_names'][k].get('sqlite_data_type')) else v) for k, v in ordered_row_fields.items()])
             insert_record_script = f'''INSERT INTO "{obj_api_name}"
                 ({comma_separated_field_api_names})
                 VALUES
                 ({comma_separated_cell_values})
             ;
             '''
-            dest_cur.executescript(insert_record_script)
+            #dest_cur.executescript(insert_record_script) # PRODUCTION LINE; UNCOMMENT WHEN RUNNING
 
     def __create_record_type_table(self, obj_api_name, record_type_developer_names_set, dest_cur):
         create_table_script = f'''CREATE TABLE "{obj_api_name}_rt_mapping" (
@@ -64,14 +64,14 @@ class YayForPython(BaseSalesforceApiTask):
 	        PRIMARY KEY (record_type_id)
         );
         '''
-        dest_cur.executescript(create_table_script)
+        #dest_cur.executescript(create_table_script) # PRODUCTION LINE; UNCOMMENT WHEN RUNNING
         for record_type_developer_name in record_type_developer_names_set:
             insert_record_script = f'''INSERT INTO "{obj_api_name}_rt_mapping"
                 (record_type_id, developer_name)
                 VALUES
                 ('{record_type_developer_name}','{record_type_developer_name}');
             '''
-            dest_cur.executescript(insert_record_script)
+            #dest_cur.executescript(insert_record_script) # PRODUCTION LINE; UNCOMMENT WHEN RUNNING
 
     def __make_new_sqlite(self, dest_db_conn, dest_db_cur):
         for object_api_name, object_detail_holder in sfdmu_objects_of_interest.items():
@@ -79,7 +79,7 @@ class YayForPython(BaseSalesforceApiTask):
                 self.__create_record_type_table(
                     obj_api_name=object_api_name, record_type_developer_names_set=object_detail_holder['record_type_developer_names'], dest_cur=dest_db_cur)
             self.__create_data_table(obj_api_name=object_api_name,
-                    obj_detls=object_detail_holder, dest_cur=dest_db_cur)
+                                     obj_detls=object_detail_holder, dest_cur=dest_db_cur)
 
     def __process_sqlite_table(self, source_cur, sq_object_api_name):
         for row in source_cur.execute(f"PRAGMA table_info('sqlt_{sq_object_api_name}')"):
@@ -99,9 +99,9 @@ class YayForPython(BaseSalesforceApiTask):
         for object_api_name, object_details in sfdmu_objects_of_interest.items():
             object_primary_key = object_details['upsert_mapping_key_api_name']
             mapping_details = {'sf_object': object_api_name,
-                'table': f'sqlt_{object_api_name}', 'action': 'upsert',
-                'update_key': object_primary_key, 'soql_filter': f'{object_primary_key} <> NULL',
-                'fields': {k:f'sqlt___{k}' for k in object_details['mapping_field_api_names'].keys()}}
+                               'table': f'sqlt_{object_api_name}', 'action': 'upsert',
+                               'update_key': object_primary_key, 'soql_filter': f'{object_primary_key} <> NULL',
+                               'fields': {k: f'sqlt___{k}' for k in object_details['mapping_field_api_names'].keys()}}
             mapping_obj[f'Insert {object_api_name}'] = mapping_details
         print(yaml.dump(mapping_obj))
 
@@ -121,6 +121,7 @@ class YayForPython(BaseSalesforceApiTask):
                 'field_api_name': field_api_name}
             row_data_collector[field_api_name] = cell_value
             # TODO:  Add some sort of handling for putting "__r" foreign-key values in their "__c" columns, just like was done with "RecordType"
+            # TODO:  Oooooh -- maybe I could just use SFDMU transforms to have all such data arranged properly in the first place.
         if field_api_name in ['Name', obj_pk_api_name]:
             mapping_field_api_name_collector[field_api_name]['not_null_constraint'] = True
         if field_api_name == obj_pk_api_name:

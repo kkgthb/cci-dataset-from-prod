@@ -1,3 +1,10 @@
+Insert hed__Address__c:
+  sf_object: hed__Address__c
+  table: sqlt_hed__Address__c
+  action: upsert
+  update_key: Name
+  fields:
+    Name: sqlt___Name
 Insert Account:
   sf_object: Account
   table: sqlt_Account
@@ -7,4 +14,29 @@ Insert Account:
     Name: sqlt___Name
     hed__School_Code__c: sqlt___hed__School_Code__c
     RecordTypeId: sqlt___RecordTypeId
-  soql_filter: 'hed__School_Code__c <> NULL'
+  lookups:
+    hed__Current_Address__c:
+      table: sqlt_hed__Address__c
+  soql_filter: "hed__School_Code__c <> NULL"
+Insert summit__Summit_Events__c:
+  sf_object: summit__Summit_Events__c
+  table: sqlt_summit__Summit_Events__c
+  action: upsert
+  update_key: Name
+  fields:
+    Name: sqlt___Name
+    summit__Event_Short_Listing_Description__c: sqlt___summit__Event_Short_Listing_Description__c
+  soql_filter: Name <> NULL
+Insert summit__Summit_Events_Instance__c:
+  sf_object: summit__Summit_Events_Instance__c
+  table: sqlt_summit__Summit_Events_Instance__c
+  action: upsert
+  update_key: Name
+  fields:
+    Name: sqlt___Name
+    summit__Event__c: sqlt___summit__Event__c
+    summit__Instance_Title__c: sqlt___summit__Instance_Title__c
+  lookups:
+    summit__Event__c:
+      table: sqlt_summit__Summit_Events__c
+  soql_filter: Name <> NULL
