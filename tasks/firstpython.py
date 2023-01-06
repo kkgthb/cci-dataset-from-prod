@@ -35,8 +35,7 @@ class YayForPython(BaseSalesforceApiTask):
             ordered_row_fields = OrderedDict(row_fields)
             ordered_row_fields.move_to_end(obj_primary_key, last=False)
             comma_separated_field_api_names = ', '.join(ordered_row_fields.keys())
-            # TODO:  Fix that this needs to be field-API-type-aware to get numbers, Booleans, etc. right.
-            comma_separated_cell_values = ', '.join([f"'{x}'" for x in ordered_row_fields.values()])
+            comma_separated_cell_values = ', '.join([(f"'{v}'" if ( 'VARCHAR' in obj_detls['mapping_field_api_names'][k]['sqlite_data_type'] ) else v) for k,v in ordered_row_fields.items()])
             insert_record_script = f'''INSERT INTO "{obj_api_name}" 
                 ({comma_separated_field_api_names}) 
                 VALUES 
